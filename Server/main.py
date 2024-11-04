@@ -2,7 +2,7 @@ import ServerThread, CommandThread, DownloadThread, ThreadCommBus, PrintBus, con
 import json
 
 defaultConfig = {
-    "API": "***REMOVED***",
+    "API": "None",
     "Path": "C:\\HiAnimeDaemon",
     "Server": "hd-1",
     "Type": "sub",

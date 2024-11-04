@@ -42,7 +42,7 @@ argList = {
 defaultConfig = {
     "Host": socket.gethostname(),
     "Port" : 9909,
-    "API": "***REMOVED***"
+    "API": "None"
 }
 
 
