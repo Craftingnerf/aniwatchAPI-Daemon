@@ -106,7 +106,7 @@ def saveTempFile(data, fileIn, num):
     return tmpFilePath
 
 def ffmpegGen(video, captions, filePath, epName, fontSize):
-
+    epName = epName.replace("\'", "").replace("\"", "")
     createPath(filePath) # make sure the filepath exists
     outputFile = os.path.join(filePath,f"{epName}") # the output file should be "<epNum>-<epName>.mp4"
     Print("FFMPEG Video Downloader Started")
@@ -146,6 +146,8 @@ def ffmpegGen(video, captions, filePath, epName, fontSize):
     os.remove(srtFile)
 
 def ffmpegGenNoCaptions(video, filePath, epName):
+    epName = epName.replace("\'", "").replace("\"", "")
+    
     createPath(filePath)
     Print("FFMPEG Video Downloader Started")
     
