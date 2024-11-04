@@ -188,7 +188,7 @@ class CommandProcessor:
     def downloadVideo(self, data, episode, episodes, animeName):
         # get the config overrides
         category, server, fontSize, lang, path = self.getConfigOverrides(data)
-        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_")))
+        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")
 
         self.Print(f"Queueing download for {episode["title"]} (Episode {episode["number"]})")
 
@@ -239,7 +239,7 @@ class CommandProcessor:
         animeName = animeData["anime"]["info"]["name"]
         # pulls the poster URL from the JSON
         poster = animeData["anime"]["info"]["poster"] 
-        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_")))
+        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")
 
         self.Print(f"{animeId}'s info fetched", True)
         self.Print(f"Poster found at {poster}", True)
@@ -433,7 +433,7 @@ class CommandProcessor:
         fileName = f"$-{self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))}-Info.txt"
         
         # parse the request
-        msg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeInfo["info"]["name"].replace(" ", "_")))}
+        msg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))).replace("\\","/")}
         msg["text"] = lines
         msg["filename"] = fileName
         # send the download request to the queue
@@ -474,7 +474,7 @@ class CommandProcessor:
 
         # create the Poster download request
         self.Print(f"Parsing queue request", True)
-        postrMsg = { "Type" : "Image", "Path": os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))), "url" : poster, "filename" : postrFileName}
+        postrMsg = { "Type" : "Image", "Path": os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/"), "url" : poster, "filename" : postrFileName}
         self._BUS.downChannel.put(postrMsg)
         self.Print(f"Finished queueing {animeName}'s poster")
 
@@ -484,7 +484,7 @@ class CommandProcessor:
         descFileName = f"$-{self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))}-Info.txt"
 
         # parse the request
-        descMsg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeName.replace(" ", "_")))}
+        descMsg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")}
         descMsg["text"] = lines
         descMsg["filename"] = descFileName
 

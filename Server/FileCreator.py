@@ -19,7 +19,7 @@ Print("File creator loaded")
 
 def downloadPoster(path, poster, name):
     createPath(path)
-    outputFile = os.path.join(path, name) # get the full path to where we want the poster
+    outputFile = os.path.join(path, name).replace("\\","/") # get the full path to where we want the poster
     # request the URL, and save the data
     resp = requests.get(poster)
     if resp.status_code != 200:
@@ -45,16 +45,16 @@ def createPath(path):
         for path2 in path.split("/")[1:]: # loop through all the indexes of the split path
             Print(os.path.join(bPath,path2), True) # print the new path for debug purposes
             if not os.path.exists(os.path.join(bPath,path2)): # that path doesnt exist make the new folder
-                os.mkdir(os.path.join(bPath,path2)) 
+                os.mkdir(os.path.normpath(os.path.join(bPath,path2)))
                 Print(f"Created Folder at {os.path.join(bPath,path2)}") # debug for the user
-            bPath = os.path.join(bPath,path2) # update the path we're working with
+            bPath = os.path.join(bPath,path2).replace("\\","/") # update the path we're working with
     # this function is effectivly a recursive mkdir function
     Print(f"'{path}' has been created!", True)
 
 def createDescriptionFile(path, lines, filename):
     createPath(path)
     # get the path for the discription
-    animePath = os.path.join(path, filename) 
+    animePath = os.path.join(path, filename).replace("\\","/")
     # open and write to (in bytes) the anime info
     file = open(animePath, "wb") 
     Print(f"Writing anime description to : {animePath}") 
@@ -98,7 +98,7 @@ def fetchURL(url):
         raise Exception(f"Failed to fetch subtitles from URL")
 
 def saveTempFile(data, fileIn, num):
-    tmpFilePath = os.path.join(fileIn, str(num))+"-Captions.vtt"
+    tmpFilePath = os.path.join(fileIn, str(num)).replace("\\","/")+"-Captions.vtt"
     tmpFile = open(tmpFilePath, "w", encoding="utf-8")
     tmpFile.write(data)
     tmpFile.close()
@@ -108,7 +108,7 @@ def saveTempFile(data, fileIn, num):
 def ffmpegGen(video, captions, filePath, epName, fontSize):
     epName = epName.replace("\'", "").replace("\"", "")
     createPath(filePath) # make sure the filepath exists
-    outputFile = os.path.join(filePath,f"{epName}") # the output file should be "<epNum>-<epName>.mp4"
+    outputFile = os.path.join(filePath,f"{epName}").replace("\\","/") # the output file should be "<epNum>-<epName>.mp4"
     Print("FFMPEG Video Downloader Started")
     
     subtitleCont = fetchURL(captions).strip()
@@ -151,7 +151,7 @@ def ffmpegGenNoCaptions(video, filePath, epName):
     createPath(filePath)
     Print("FFMPEG Video Downloader Started")
     
-    outputFile = os.path.join(filePath,f"{epName}")
+    outputFile = os.path.join(filePath,f"{epName}").replace("\\","/")
     outFile = outputFile+'.mp4'
     
     Print(outFile, True)
