@@ -1,0 +1,53 @@
+// CLI daemon/server
+
+// server side
+needs to save commands preferably in a JSON format on the file system
+needs to parse commands (probably through JSON)
+needs to download video using FFMPEG
+needs to queue commands from the queue
+needs to take commands and put them in a queue from the socket
+
+// client side
+needs to be able to send commands (probably through JSON)
+needs to be able to independently request data from the API server
+
+
+structure for HiAnimeDaemon commands
+{
+	"cmd": "Command", 
+	// this determines what we look for next (download : ep, season (mass ep downloader), poster, description, ALL (season + poster and description)) 
+    // Available commands : downloadPoster, pass, downloadEpisode, downloadSeason, downloadAnimeInfo, downloadAll
+	// (might add check commands)
+ 
+	"animeId" : "<AnimeID>", 
+	// needed 100% of the time (download : ep, season (mass ep downloader), poster, description, ALL (season + poster and description))
+
+	// needed if we want to download a specific ep
+	"episodeNumber": <ep Number>,
+    
+    // below is only needed if we want something other than the default config settings
+    "type": (sub/dub/raw) 
+    "fontsize" : <number>
+    "server": (serverName) // anything other than hd-1 will break it
+    "language" : (subtitle language)
+    "path" : (string) // new path to use
+}
+
+Structure for download jobs
+{
+    "Type" : (string) -- (Image, Video, Description) 
+    "Path" : (string) -- absolute filepath for the output (doesnt include filename)
+    "filename": (string)
+    // for images
+    "url" : (string)
+
+    // description
+    "text": (list of strings)
+
+    // video
+    "video" : "url",
+    "category": (sub/dub)
+    // the following need sub
+    "captions" : "url",
+    "font" : <fontsize> (number)
+}
