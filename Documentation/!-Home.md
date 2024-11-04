@@ -1,4 +1,5 @@
 # Welcome to my documentation for my Aniwatch Daemon
+BEST VIEWED IN OBSIDIAN
 
 ## Starters
 
