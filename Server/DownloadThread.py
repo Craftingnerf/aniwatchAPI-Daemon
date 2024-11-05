@@ -154,6 +154,7 @@ class DownloadManager:
                         self.videoDeque.popleft()
                 if self._BUS.killBus.empty():
                     self.saveDeque()
+                self.Print("Finished downloading something", True)
                 pass
             else:
                 time.sleep(1)

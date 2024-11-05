@@ -47,6 +47,15 @@ class CommandProcessor:
         string = string.replace(" ", "_")
         return string
     
+    def blacklistedChars(self, string):
+        invalid_chars = "\'`\",." #invalid chars *generally*
+        for char in invalid_chars: 
+            string = string.replace(char, "") # loop thru all invalid chars and replace them with _'s in the stirng
+        string.strip() # remove trailing " "'s
+        string = string.replace(" ", "_")
+        return string
+
+
     def numFormatter(self, num, maxNum):
         return format(num, f"0{math.floor(math.log10(maxNum)+1)}d")
 
@@ -116,7 +125,7 @@ class CommandProcessor:
         msg = { "Type" : "Video", "Path" : path}
         msg["video"] = video
         msg["category"] = category
-        msg["filename"] = filename
+        msg["filename"] = self.blacklistedChars(filename)
         if captions != None:
             msg["captions"] = captions
         if font != None:
