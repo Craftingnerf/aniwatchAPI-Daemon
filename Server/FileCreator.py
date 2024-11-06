@@ -74,6 +74,13 @@ def createDescriptionFile(path, lines, filename):
 # I made this when I made my old HiAnimeCLI client
 # 
 
+def ffmpegClean(string):
+    invalidChars = "`\'\"(){}[]"
+    for char in invalidChars:
+        string = string.replace(char, "")
+    return string
+
+
 def convertWebVttToSrt(tempFilepath):
     Print("Converting temp file to srt subtitles", True)
     outFile = ".".join(tempFilepath.split(".")[:-1])
@@ -106,7 +113,7 @@ def saveTempFile(data, fileIn, num):
     return tmpFilePath
 
 def ffmpegGen(video, captions, filePath, epName, fontSize):
-    epName = epName.replace("\'", "").replace("\"", "")
+    epName = ffmpegClean(epName)
     createPath(filePath) # make sure the filepath exists
     outputFile = os.path.join(filePath,f"{epName}").replace("\\","/") # the output file should be "<epNum>-<epName>.mp4"
     Print("FFMPEG Video Downloader Started")
@@ -146,7 +153,7 @@ def ffmpegGen(video, captions, filePath, epName, fontSize):
     os.remove(srtFile)
 
 def ffmpegGenNoCaptions(video, filePath, epName):
-    epName = epName.replace("\'", "").replace("\"", "")
+    epName = ffmpegClean(epName)
     
     createPath(filePath)
     Print("FFMPEG Video Downloader Started")
