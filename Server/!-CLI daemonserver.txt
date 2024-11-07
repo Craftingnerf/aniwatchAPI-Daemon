@@ -24,6 +24,11 @@ structure for HiAnimeDaemon commands
 
 	// needed if we want to download a specific ep
 	"episodeNumber": <ep Number>,
+
+    // needed if we want to burn subtitles
+    "burn" : (boolean),
+    "language" : (subtitle language),
+    
     
     // below is only needed if we want something other than the default config settings
     "type": (sub/dub/raw) 

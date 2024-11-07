@@ -16,7 +16,7 @@ class CommandProcessor:
     def __init__(self, bus=ThreadCommBus.BUS, config=None):
         self.commandList = { # list of commands mapped to functions to be called later
             "downloadPoster" : self.downloadPoster,
-            "pass": self.stop, # def pass() wasnt an option :(
+            "pass": self.stop, # def pass() wasnt an option
             "downloadEpisode" : self.downloadEpisode,
             "downloadSeason" : self.downloadSeason,
             "downloadAnimeInfo" : self.downloadAnimeInfo,
@@ -118,10 +118,14 @@ class CommandProcessor:
             path = data["path"] # default path
         else:
             path=self.outputPath
-        return [type, server, fontSize, lang, path]
+        if list(data.keys()).__contains__("burn"):
+            burn = data["burn"]
+        else:
+            burn = False
+        return [type, server, fontSize, lang, path, burn]
 
 
-    def createDownloadVideoMessage(self, path, video, filename, category, captions=None, font=None):
+    def createDownloadVideoMessage(self, path, video, filename, category, captions=None, font=None, burn=None):
         msg = { "Type" : "Video", "Path" : path}
         msg["video"] = video
         msg["category"] = category
@@ -130,6 +134,8 @@ class CommandProcessor:
             msg["captions"] = captions
         if font != None:
             msg["font"] = font
+        if burn != None:
+            msg["burn"] = burn
         return msg
 
     def getCaptions(self, tracks, Lang=None):
@@ -196,7 +202,7 @@ class CommandProcessor:
 
     def downloadVideo(self, data, episode, episodes, animeName):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
         path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")
 
         self.Print(f"Queueing download for {episode["title"]} (Episode {episode["number"]})")
@@ -217,14 +223,19 @@ class CommandProcessor:
             msg = self.createDownloadVideoMessage(path, video, fileName, category)
         else:
             # find the captions specified and create the message
-            captions = self.getCaptions(episodeStreaming["tracks"], lang)
+            captions = []
+            if burn:
+                captions = [self.getCaptions(episodeStreaming["tracks"], lang)]
+            else:
+                for track in episodeStreaming["tracks"]:
+                    captions.append(track["file"])
             if captions == None:
                 self.Print("No captions found!")
                 self.Print("Downloading video without captions")
                 msg = self.createDownloadVideoMessage(path, video, fileName, category)
             else:
                 captions = captions["file"]
-                msg = self.createDownloadVideoMessage(path, video, fileName, category, captions, fontSize)
+                msg = self.createDownloadVideoMessage(path, video, fileName, category, captions, fontSize, burn=burn)
         
         self.Print("Sending message to the download bus", True)
         # send the message to the download channel

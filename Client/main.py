@@ -32,9 +32,9 @@ argList = {
     "getEpStreaming" : "--anime (animeID) -e (EpisodeNumber) --category (sub/dub/raw)",
     "downloadDescription" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP)",
     "downloadPoster" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP)",
-    "downloadEpisode" : "--anime (anime ID) -p (number) -e (episode number) (OPTIONAL) --ip (server IP)",
-    "downloadSeason" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP)",
-    "downloadAll" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP)",
+    "downloadEpisode" : "--anime (anime ID) -p (number) -e (episode number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
+    "downloadSeason" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
+    "downloadAll" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
     "exit" : "None",
     "":"",
     "Config Overrides (Not a command)" : " --path (filepath) --language (eg \"English\") --server (eg \"hd-1\") --fontsize (number) --category (sub/dub/raw)"
@@ -63,7 +63,7 @@ _API = APIRequester.API(config["API"])
 
 def parseArgs(args):
     anime, server, port, epNum = None,None,None,None
-    path, lang, serv, font, cate = None,None,None,None,None
+    path, lang, serv, font, cate, burn = None,None,None,None,None
     if args.__contains__("--anime"):
         anime = args[args.index("--anime")+1]
     else:
@@ -96,7 +96,10 @@ def parseArgs(args):
     if args.__contains__("--category"):
         cate = args[args.index("--category")+1]
 
-    return anime, server, port, epNum, path, lang, serv, font, cate
+    if args.__contains__("--burn"):
+        burn = True
+
+    return anime, server, port, epNum, path, lang, serv, font, cate, burn
 
 def getMaxLen(listStr, key):
     currentMax = 0
@@ -375,7 +378,7 @@ def sendMsgToServ(msg, port, ip=socket.gethostname()):
     client.close()
 
 def downDesc(args):
-    anime, server, port, epNum, path, lang, serv, font, cate = parseArgs(args)
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
     # parse the msg
     msg = {"cmd": "downloadAnimeInfo", "animeId": anime}
     if server != None:
@@ -384,7 +387,7 @@ def downDesc(args):
         sendMsgToServ(msg, port)
 
 def downPoster(args):
-    anime, server, port, epNum, path, lang, serv, font, cate = parseArgs(args)
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
 
     # parse the msg
     msg = {"cmd": "downloadPoster", "animeId": anime}
@@ -395,7 +398,7 @@ def downPoster(args):
         sendMsgToServ(msg, port)
 
 def downEp(args):
-    anime, server, port, epNum, path, lang, serv, font, cate = parseArgs(args)
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
     
     if epNum == None:
         print("Cant download unknwon episode (-e)")
@@ -415,6 +418,8 @@ def downEp(args):
         msg["fontsize"] = font
     if cate != None:
         msg["type"] = cate
+    if burn != None:
+        msg["burn"] = burn
 
     if server != None:
         sendMsgToServ(msg, port, server)
@@ -422,7 +427,7 @@ def downEp(args):
         sendMsgToServ(msg, port)
 
 def downSeason(args):
-    anime, server, port, epNum, path, lang, serv, font, cate = parseArgs(args)
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
 
     # parse the msg
     msg = {"cmd": "downloadSeason", "animeId": anime}
@@ -438,6 +443,8 @@ def downSeason(args):
         msg["fontsize"] = font
     if cate != None:
         msg["type"] = cate
+    if burn != None:
+        msg["burn"] = burn
 
     if server != None:
         sendMsgToServ(msg, port, server)
@@ -445,7 +452,7 @@ def downSeason(args):
         sendMsgToServ(msg, port)
 
 def downAll(args):
-    anime, server, port, epNum, path, lang, serv, font, cate = parseArgs(args)
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
 
     # parse the msg
     msg = {"cmd": "downloadAll", "animeId": anime}
@@ -461,6 +468,8 @@ def downAll(args):
         msg["fontsize"] = font
     if cate != None:
         msg["type"] = cate
+    if burn != None:
+        msg["burn"] = burn
 
 
     if server != None:

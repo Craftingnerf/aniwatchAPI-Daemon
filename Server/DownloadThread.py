@@ -17,8 +17,9 @@ from collections import deque
 #     "video" : "url",
 #     "category": (sub/dub)
 #     // the following need sub
-#     "captions" : "url",
+#     "captions" : ["url1", "url2"],
 #     "font" : <fontsize> (number)
+#     "burn" : false (optional TRUE) -- burns in the first URL in the captions list
 # }
 
 color = "\033[34m"
@@ -126,16 +127,7 @@ class DownloadManager:
                     cmd = self.videoDeque[0]
                 if cmd["Type"].lower() == "video":
                     # command is for a video type
-                    if list(cmd.keys()).__contains__("captions") and cmd["category"].lower() != "dub":
-                        self.Print(f"Downloading video {cmd["filename"]}", True, True)
-                        # self.Print(f"Would have downloaded video, with subtitles")
-                        FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"], cmd["font"])
-                        self.videoDeque.popleft()
-                    else:
-                        self.Print(f"Downloading video {cmd["filename"]}", True, True)
-                        # self.Print(f"Would have downloaded video, without subtitles")
-                        FileCreator.ffmpegGenNoCaptions(cmd["video"], cmd["Path"], cmd["filename"])
-                        self.videoDeque.popleft()
+                    self.videoDownloadProc(cmd)
                 elif cmd["Type"].lower() == "image":
                     # command is for a image type
                     self.Print(f"Downloading poster {cmd["filename"]}", True, True)
@@ -159,6 +151,25 @@ class DownloadManager:
             else:
                 time.sleep(1)
         
+    def videoDownloadProc(self, cmd):
+        if list(cmd.keys()).__contains__("captions") and cmd["category"].lower() != "dub":
+            self.Print(f"Downloading video {cmd["filename"]}", True, True)
+            # self.Print(f"Would have downloaded video, with subtitles")
+            if list(cmd.keys().__contains__("burn")):
+                if cmd["burn"]:
+                    FileCreator.ffmpegGenDEP(cmd["video"], cmd["captions"][0], cmd["Path"], cmd["filename"], cmd["font"])
+                else:
+                    FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"], cmd["font"])
+            else:
+                FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"], cmd["font"])
+            self.videoDeque.popleft()
+        else:
+            self.Print(f"Downloading video {cmd["filename"]}", True, True)
+            # self.Print(f"Would have downloaded video, without subtitles")
+            FileCreator.ffmpegGenNoCaptions(cmd["video"], cmd["Path"], cmd["filename"])
+            self.videoDeque.popleft()
+
+
     def printDeque(self):
         lst = []
         for item in self.miscDeque:

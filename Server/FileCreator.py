@@ -68,10 +68,52 @@ def createDescriptionFile(path, lines, filename):
     Print("Finished writing lines", True)
     return
 
+def ffmpegGen(video, captions, filePath, epName, fontSize):
+    epName = ffmpegClean(epName)
+    createPath(filePath) # make sure the filepath exists
+    outputFile = os.path.join(filePath,f"{epName}").replace("\\","/") # the output file should be "<epNum>-<epName>.mp4"
+    Print("FFMPEG Video Downloader Started")
+    args = [
+        '-protocol_whitelist',
+        'file,http,https,tcp,tls,crypto',
+        "-y", # -y allows automatic file overwriting, -n automatically skips if there is a file with the same name
+        '-i',
+        "\""+video+"\"",
+    ]
+
+    # this allows the captions to be selected by the user
+    for caption in captions:
+        # designating new input file
+        args.append("-i") 
+        # new input file
+        args.append(caption) 
+
+    # add the rest of the arguments
+    args += [
+        '-c:a',
+        'copy',
+        '-c:v',
+        'libx264',
+        '-c:s',
+        'copy',
+        '-crf',
+        '23',
+        '-preset',
+        'veryfast',
+        '-s',
+        '1920x1080',
+        "\""+outputFile+'.mp4'+"\""
+    ]
+    # "compile" the command
+    cmd = "ffmpeg " + " ".join(args)
+    # run the command
+    subprocess.run(cmd, shell=True) 
+    Print(cmd, True) # prints the command for debug purposes (and potentially later use)
+
 # 
 # Older code
 # copied from my "ffmpegGenerator.py"
-# I made this when I made my old HiAnimeCLI client
+# I made this when I made my old HiAnimeCLI client (not on github)
 # 
 
 def ffmpegClean(string):
@@ -112,7 +154,10 @@ def saveTempFile(data, fileIn, num):
     
     return tmpFilePath
 
-def ffmpegGen(video, captions, filePath, epName, fontSize):
+# leagacy (or depracated) download function
+# will see minimal updates (along with the rest of the codebase unless I run into a bug)
+# burns the subtitles into the video (and has problems with linux for no reason)
+def ffmpegGenDEP(video, captions, filePath, epName, fontSize):
     epName = ffmpegClean(epName)
     createPath(filePath) # make sure the filepath exists
     outputFile = os.path.join(filePath,f"{epName}").replace("\\","/") # the output file should be "<epNum>-<epName>.mp4"
@@ -149,6 +194,8 @@ def ffmpegGen(video, captions, filePath, epName, fontSize):
     Print(cmd, True) # prints the command for debug purposes (and potentially later use)
     
     # Delete the temporary subtitle file
+    # this is the bit that has linux problems
+    # commenting out the os.remove() will solve the issue (its needed for first playback for whatever reason)
     Print("deleting temp file", True)
     os.remove(srtFile)
 
