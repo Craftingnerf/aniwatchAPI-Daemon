@@ -17,4 +17,4 @@ the code is somewhat commented (just enough to be legable I hope) so you could t
 the API requester is also a good spot to look for API fetch functions (I think) although it has minimal comments (b/c its basically a getter script)
 
 I'd reccomend checking out ghostRitesh12's API if you want more knowledge on how the API data is parsed in my scripts (lots of magic paths) (URL again (https://github.com/ghoshRitesh12/aniwatch-api))
-I am in no way connected to his development group, I just his API and repurposed it for a client/server config
+I am in no way connected to his development group, I just used his API and repurposed it for a client/server config
