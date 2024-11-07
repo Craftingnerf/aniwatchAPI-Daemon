@@ -155,7 +155,7 @@ class DownloadManager:
         if list(cmd.keys()).__contains__("captions") and cmd["category"].lower() != "dub":
             self.Print(f"Downloading video {cmd["filename"]}", True, True)
             # self.Print(f"Would have downloaded video, with subtitles")
-            if list(cmd.keys().__contains__("burn")):
+            if list(cmd.keys()).__contains__("burn"):
                 if cmd["burn"]:
                     FileCreator.ffmpegGenDEP(cmd["video"], cmd["captions"][0], cmd["Path"], cmd["filename"], cmd["font"])
                 else:
