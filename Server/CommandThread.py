@@ -234,7 +234,6 @@ class CommandProcessor:
                 self.Print("Downloading video without captions")
                 msg = self.createDownloadVideoMessage(path, video, fileName, category)
             else:
-                captions = captions["file"]
                 msg = self.createDownloadVideoMessage(path, video, fileName, category, captions, fontSize, burn=burn)
         
         self.Print("Sending message to the download bus", True)
