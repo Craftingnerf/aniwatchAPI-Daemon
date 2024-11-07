@@ -244,7 +244,7 @@ class CommandProcessor:
 
     def downloadPoster(self, data):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
         
         animeId = data["animeId"]
         # parse and fetch the animeId's info
@@ -272,7 +272,7 @@ class CommandProcessor:
 
     def downloadEpisode(self, data):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
 
         # cache the animeID from the data
         animeId = data["animeId"] 
@@ -298,7 +298,7 @@ class CommandProcessor:
         
     def downloadSeason(self, data):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
 
         # Get the anime name and info
         animeId = data["animeId"]
@@ -430,7 +430,7 @@ class CommandProcessor:
 
     def downloadAnimeInfo(self, data):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
         
         # Get the anime name and info
         animeId = data["animeId"]
@@ -461,7 +461,7 @@ class CommandProcessor:
 
     def downloadAll(self, data):
         # get the config overrides
-        category, server, fontSize, lang, path = self.getConfigOverrides(data)
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
 
         self.Print("Fetching anime Info and episodes", True)
         # Get the anime name and info
