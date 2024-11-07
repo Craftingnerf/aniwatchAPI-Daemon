@@ -228,7 +228,10 @@ class CommandProcessor:
                 captions = [self.getCaptions(episodeStreaming["tracks"], lang)]
             else:
                 for track in episodeStreaming["tracks"]:
-                    captions.append(track["file"])
+                    self.Print(f"Caption data {track}", True)
+                    if track["kind"] == "captions":
+                        data = {"file" : track["file"], "label" : track["label"]}
+                        captions.append(data)
             if captions == None:
                 self.Print("No captions found!")
                 self.Print("Downloading video without captions")

@@ -1,4 +1,4 @@
-import subprocess, os, requests, time, ThreadCommBus
+import subprocess, os, requests, time, ThreadCommBus, json
 
 _BUS = ThreadCommBus.BUS()
 header = "(File Creator): "
@@ -68,53 +68,139 @@ def createDescriptionFile(path, lines, filename):
     Print("Finished writing lines", True)
     return
 
-def ffmpegGen(video, captions, filePath, epName, fontSize):
+
+# # # # # # # # # # # # # # # #
+# Download subittles from url #
+# # # # # # # # # # # # # # # #
+def downloadSubtitles(filePath, epName, captions):
+    subtitles = []
+    Print("Caption Downloader Started")
+    for caption in captions:
+        captionFile = caption["file"].split("/")[-1] # get the end of the path string (/path/to/file.type)
+        captionFile = captionFile.split(".")[0] # isolate the name (we dont want the type)
+        fileName = f"{epName}-{captionFile}"
+        outputFile = os.path.join(filePath, f"{fileName}.srt").replace("\\", "/")
+        args = [
+            "-y", # overwrite existing files
+            f"-i {caption["file"]}", # file to download
+            "-c:s srt", # subtitle codec converts to srt
+            f"\"{outputFile}\"" # output file
+        ]
+        subtitles.append(outputFile)
+        cmd = f"ffmpeg {" ".join(args)}"
+        subprocess.run(cmd, shell=True) 
+        Print(cmd, True)
+    return subtitles
+
+# # # # # # #  # # # # # # # #
+# Downloads video from a url #
+# # # # # # #  # # # # # # # #
+def downloadVideo(video, filePath, epName):
     epName = ffmpegClean(epName)
     createPath(filePath) # make sure the filepath exists
-    outputFile = os.path.join(filePath,f"{epName}").replace("\\","/") # the output file should be "<epNum>-<epName>.mp4"
+    outputFile = os.path.join(filePath, f"{epName}-NoSubs.mp4").replace("\\","/")
     Print("FFMPEG Video Downloader Started")
+
     args = [
-        '-protocol_whitelist',
-        'file,http,https,tcp,tls,crypto',
-        "-y", # -y allows automatic file overwriting, -n automatically skips if there is a file with the same name
-        '-i',
-        "\""+video+"\"",
+        "-y", # overwrite existing copies
+        f"-i \"{video}\"", # download from the video url
+        "-c copy", # copy the input stream (dont re-encode it)
+        f"\"{outputFile}\"" # where to put the result
     ]
 
-    # this allows the captions to be selected by the user
-    for caption in captions:
-        # designating new input file
-        args.append("-i") 
-        # new input file
-        args.append(caption) 
-
-    # add the rest of the arguments
-    args += [
-        '-c:a',
-        'copy',
-        '-c:v',
-        'libx264',
-        '-c:s',
-        'copy',
-        '-crf',
-        '23',
-        '-preset',
-        'veryfast',
-        '-s',
-        '1920x1080',
-        "\""+outputFile+'.mp4'+"\""
-    ]
     # "compile" the command
     cmd = "ffmpeg " + " ".join(args)
     # run the command
     subprocess.run(cmd, shell=True) 
-    Print(cmd, True) # prints the command for debug purposes (and potentially later use)
+    Print(cmd, True)
 
-# 
-# Older code
-# copied from my "ffmpegGenerator.py"
-# I made this when I made my old HiAnimeCLI client (not on github)
-# 
+    return outputFile
+
+
+# # # # # # # # # #  # # # # # # # # # #
+# Get map and input data from captions #
+# # # # # # # # # #  # # # # # # # # # #
+def getSubitleData(caption, i):
+    captionFile = caption["file"].replace("\\", "/").split("/")[-1] # get the end of the path string (/path/to/file.type)
+    captionFile = captionFile.split(".")[0] # isolate the name (we dont want the type)
+
+    output = ["", "", ""]
+    # get the stream url for the caption
+    output[0] = f"-i \"{caption["file"]}\"" 
+
+    # map the subtitle to the track
+    output[1] = f"-map \"{i+1}\""
+
+    # get the metadata
+    output[2] = f"-metadata:s:s:{i} language=\"{captionFile}\" -metadata:s:s:{i} title=\"{caption["label"]}\"" 
+
+    return output
+
+
+# # # # # # # #  # # # # # # # # # 
+# Adds subtitles to a video file #
+# # # # # # # #  # # # # # # # # # 
+def addSubtitlesToVideo(epName, filePath, captions):
+    videoFile = os.path.join(filePath,f"{epName}.mp4").replace("\\","/")
+    file = os.path.join(filePath, f"{epName}-NoSubs.mp4").replace("\\","/")
+    # rename the raw video file to a different name to add the subs
+    
+    args = [
+        "-y", # overwrite existing files 
+        f"-i \"{file}\"" # video input
+    ]
+    maps = [
+        "-map 0" # map the video
+    ]
+
+    metadata = []
+    for i in range(len(captions)):
+        data = getSubitleData(captions[i], i)
+        args.append(data[0]) # add the inputs
+        maps.append(data[1]) # add the maps 
+        metadata.append(data[2]) # add the metadata
+
+    args += maps
+    args += metadata
+
+    args += [
+        "-c:s mov_text", # subtitle codec
+        "-preset veryfast" # speeds up subtitle encoding/addition at the cost of a larger file size
+        f"\"{videoFile}\"" # output file
+    ]
+
+    # compile and run the command
+    cmd = f"ffmpeg {" ".join(args)}"
+    subprocess.run(cmd, shell=True) 
+    Print(cmd, True)
+    
+    Print("Removing old video file")
+    os.remove(file)
+    return videoFile
+
+
+# # # # # # # # # # #  # # # # # # # # # # #
+# Downloads video with the captions slower #
+# # # # # # # # # # #  # # # # # # # # # # #
+def ffmpegGen(video, captions, filePath, epName):
+    epName = ffmpegClean(epName)
+    createPath(filePath) # make sure the filepath exists
+
+    videoFile = downloadVideo(video, filePath, epName) # download the video
+    Print("Waiting 1 seccond for file to be free", True)
+    time.sleep(1) # wait so the os.rename doesnt bork
+    subtitleFile = addSubtitlesToVideo(epName, filePath, captions) # add captions to the video
+
+
+# # # # # # # # # # # # #  # # # # # # # # # # # # #
+# Downloads video without the captions 100x faster #
+# # # # # # # # # # # # #  # # # # # # # # # # # # #
+def ffmpegGenNoCaptions(video, filePath, epName):
+    epName = ffmpegClean(epName)
+    createPath(filePath) # make sure the filepath exists
+
+    videoFile = downloadVideo(video, filePath, epName) # download the video
+
 
 def ffmpegClean(string):
     invalidChars = "`\'\"(){}[]"
@@ -122,6 +208,11 @@ def ffmpegClean(string):
         string = string.replace(char, "")
     return string
 
+# 
+# Older code
+# copied from my "ffmpegGenerator.py"
+# I made this when I made my old HiAnimeCLI client (not on github)
+# 
 
 def convertWebVttToSrt(tempFilepath):
     Print("Converting temp file to srt subtitles", True)
@@ -199,7 +290,7 @@ def ffmpegGenDEP(video, captions, filePath, epName, fontSize):
     Print("deleting temp file", True)
     os.remove(srtFile)
 
-def ffmpegGenNoCaptions(video, filePath, epName):
+def ffmpegGenNoCaptionsDEP(video, filePath, epName):
     epName = ffmpegClean(epName)
     
     createPath(filePath)

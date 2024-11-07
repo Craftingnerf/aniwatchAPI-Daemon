@@ -63,7 +63,7 @@ _API = APIRequester.API(config["API"])
 
 def parseArgs(args):
     anime, server, port, epNum = None,None,None,None
-    path, lang, serv, font, cate, burn = None,None,None,None,None
+    path, lang, serv, font, cate, burn = None,None,None,None,None,None
     if args.__contains__("--anime"):
         anime = args[args.index("--anime")+1]
     else:

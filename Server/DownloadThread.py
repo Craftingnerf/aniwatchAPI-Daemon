@@ -1,4 +1,4 @@
-import threading, os, time
+import threading, os, time, json
 import FileCreator, ThreadCommBus, configLoader
 from collections import deque
 
@@ -125,6 +125,7 @@ class DownloadManager:
                     misc = True
                 elif cmd == None and len(self.videoDeque) > 0:
                     cmd = self.videoDeque[0]
+                self.Print(f"Working on :\n{json.dumps(cmd, indent=4)}")
                 if cmd["Type"].lower() == "video":
                     # command is for a video type
                     self.videoDownloadProc(cmd)
@@ -159,9 +160,9 @@ class DownloadManager:
                 if cmd["burn"]:
                     FileCreator.ffmpegGenDEP(cmd["video"], cmd["captions"][0], cmd["Path"], cmd["filename"], cmd["font"])
                 else:
-                    FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"], cmd["font"])
+                    FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"])
             else:
-                FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"], cmd["font"])
+                FileCreator.ffmpegGen(cmd["video"], cmd["captions"], cmd["Path"], cmd["filename"])
             self.videoDeque.popleft()
         else:
             self.Print(f"Downloading video {cmd["filename"]}", True, True)

@@ -48,7 +48,9 @@ class CommandServer:
                     if not data: break  # if there isnt data, then break
                     connData.append(data)
                     self.Print("recieved a packet!", True)
-                self._bus.servChannel.put(json.loads(str(b"".join(connData), "utf-8")))
+                msgData = json.loads(str(b"".join(connData), "utf-8"))
+                self.Print(f"Recieved :\n{json.dumps(msgData, indent=4)}", True)
+                self._bus.servChannel.put(msgData)
                 # print(f"{self.header}Recieved : \n{json.dumps(json.loads(b"".join(connData)), indent=4)}")
     
     def shutdownServ(self):
