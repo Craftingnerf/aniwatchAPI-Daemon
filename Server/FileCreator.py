@@ -165,7 +165,7 @@ def addSubtitlesToVideo(epName, filePath, captions):
 
     args += [
         "-c:s mov_text", # subtitle codec
-        "-preset veryfast" # speeds up subtitle encoding/addition at the cost of a larger file size
+        "-preset veryfast", # speeds up subtitle encoding/addition at the cost of a larger file size
         f"\"{videoFile}\"" # output file
     ]
 
