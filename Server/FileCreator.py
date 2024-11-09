@@ -179,6 +179,38 @@ def addSubtitlesToVideo(epName, filePath, captions):
     return videoFile
 
 
+# # # # # # # # # # # # # # # # # # # # # #
+# My own method for safely renaming files #
+# # # # # # # # # # # # # # # # # # # # # #
+def rename(original, replacement):
+    # get the name and extention of the replacement file (seperate)
+    repName = replacement.split(".")[0]
+    repExt = replacement.split(".")[1]
+    repNameMod = repName
+
+    # protects from some errors
+    Print("Waiting 1 seccond for file to be free", True)
+    time.sleep(1)
+
+    counter = 0
+    # check if the replacement file exists
+    while (os.path.exists(f"{repNameMod}.{repExt}")):
+        Print(f"File \"{repNameMod}.{repExt}\" exists!, changing name", True)
+        # if the replacement file exists modify the replacment name and check again
+        counter+=1
+        repNameMod = f"{repName}-{counter}"
+    
+    # inform the user of the new file name (if verbose is enabled)
+    if counter > 0:
+        Print(f"Original file exists, name changed to : \"{repNameMod}.{repExt}\"", True)
+    
+    replacementFile = f"{repName}.{repExt}"
+    
+    # rename the file now that we know we have a unique name
+    os.rename(original, replacementFile)
+    return
+    
+
 # # # # # # # # # # #  # # # # # # # # # # #
 # Downloads video with the captions slower #
 # # # # # # # # # # #  # # # # # # # # # # #
@@ -187,8 +219,7 @@ def ffmpegGen(video, captions, filePath, epName):
     createPath(filePath) # make sure the filepath exists
 
     videoFile = downloadVideo(video, filePath, epName) # download the video
-    Print("Waiting 1 seccond for file to be free", True)
-    time.sleep(1) # wait so the os.rename doesnt bork
+
     subtitleFile = addSubtitlesToVideo(epName, filePath, captions) # add captions to the video
 
 
@@ -201,9 +232,8 @@ def ffmpegGenNoCaptions(video, filePath, epName):
     filename = os.path.join(filePath,f"{epName}.mp4").replace("\\","/")
 
     videoFile = downloadVideo(video, filePath, epName) # download the video
-    Print("Waiting 1 seccond for file to be free", True)
-    time.sleep(1) # wait so the os.rename doesnt bork
-    os.rename(videoFile, filename)
+    # rename the file (removes the "-NoSubs" bit on a file, which isnt needed for DUB or some RAW)
+    rename(videoFile, filename)
 
 
 def ffmpegClean(string):
@@ -224,10 +254,9 @@ def convertWebVttToSrt(tempFilepath):
     outFile = f'{outFile}.srt'
     outFile = outFile.replace("\'", "")
     args = [
-        '-i',
-        tempFilepath,
-        '-y',
-        outFile
+        f'-i {tempFilepath}', # designates a filepath
+        '-y', # automatically replaces existing files
+        outFile # output file
     ]
     cmd = f"ffmpeg {" ".join(args)}"
     subprocess.run(cmd, shell=True)
