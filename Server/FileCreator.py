@@ -198,8 +198,12 @@ def ffmpegGen(video, captions, filePath, epName):
 def ffmpegGenNoCaptions(video, filePath, epName):
     epName = ffmpegClean(epName)
     createPath(filePath) # make sure the filepath exists
+    filename = os.path.join(filePath,f"{epName}.mp4").replace("\\","/")
 
     videoFile = downloadVideo(video, filePath, epName) # download the video
+    Print("Waiting 1 seccond for file to be free", True)
+    time.sleep(1) # wait so the os.rename doesnt bork
+    os.rename(videoFile, filename)
 
 
 def ffmpegClean(string):
