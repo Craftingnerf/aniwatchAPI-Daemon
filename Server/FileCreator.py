@@ -2,7 +2,7 @@ import subprocess, os, requests, time, ThreadCommBus, json
 
 _BUS = ThreadCommBus.BUS()
 header = "(File Creator): "
-verboose = False
+verbose = False
 
 
 
@@ -10,8 +10,8 @@ color = "\033[32m"
 colorReset = "\033[00m"
 
 def Print(message, verb=False):
-    if verb and verboose == True:
-        _BUS.PrintBus.put(f"(Verboose) {color}{header}{message}{colorReset}")
+    if verb and verbose == True:
+        _BUS.PrintBus.put(f"(Verbose) {color}{header}{message}{colorReset}")
     elif verb == False:
         _BUS.PrintBus.put(f"{color}{header}{message}{colorReset}")
 

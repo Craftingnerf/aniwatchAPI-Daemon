@@ -14,7 +14,7 @@ class CommandServer:
         self.enabled = True
         self._bus = bus
         self.header = "(SERVER): "
-        self.verboose = vb # vb is short for verboose (you'd think I'd use the shorthand if I have to type it a lot, but nooooo)
+        self.verbose = vb # vb is short for verbose (you'd think I'd use the shorthand if I have to type it a lot, but nooooo)
 
     def startThread(self, id, port):
         self.thread = threading.Thread(target=self.main, args=(port,1))
@@ -24,8 +24,8 @@ class CommandServer:
         return self.thread
 
     def Print(self, msg, verb = False):
-        if verb and self.verboose:
-            self._bus.PrintBus.put(f"(Verboose) {color}{self.header}{msg}{colorReset}")
+        if verb and self.verbose:
+            self._bus.PrintBus.put(f"(Verbose) {color}{self.header}{msg}{colorReset}")
         else:
             self._bus.PrintBus.put(f"{color}{self.header}{msg}{colorReset}")
 
@@ -63,17 +63,22 @@ class CommandServer:
         killSocket = socket.socket() # get a socket obj
         self.Print("Sending kill code", True)
 
-        # connect to the socket server (this breaks the loop, and exits the listener.listen())
-        killSocket.connect((socket.gethostname(), self.port)) 
-        # needs a dictionary to actually close without crashing, womp womp
-        msg={"0" : "0"} 
-        
-        # send the kill message
-        killSocket.sendall(bytes(json.dumps(msg), "utf-8"))
-        self.Print("Kill code sent", True)
-        # close the socket
-        killSocket.close()
-        
+        try:
+            # connect to the socket server (this breaks the loop, and exits the listener.listen())
+            killSocket.connect((socket.gethostname(), self.port)) 
+            # needs a dictionary to actually close without crashing, womp womp
+            msg={"0" : "0"} 
+            
+            # send the kill message
+            killSocket.sendall(bytes(json.dumps(msg), "utf-8"))
+            self.Print("Kill code sent", True)
+            # close the socket
+            killSocket.close()
+        except Exception as e:
+            # catch an error (if one occurs) and print it to the terminal for debug
+            self.Print(f"Error while shutting down, shouldnt be a big issue:\n\t{e}")
+
+
         # flush the Queue, (hopefully before the CMD Proc thread gets to it)
         self._bus.servChannel.get()
         self.Print("Socket server shutdown, waiting on thread", True)

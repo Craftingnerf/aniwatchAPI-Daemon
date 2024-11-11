@@ -5,7 +5,7 @@ class PrintBus:
     def __init__(self, bus=ThreadCommBus.BUS, vb=False):
         self._BUS = bus
         self.header = "(PRINT): "
-        self.verboose = vb
+        self.verbose = vb
 
     def startPrintBus(self, id):
         self.thread = threading.Thread(target=self.run)
@@ -15,8 +15,8 @@ class PrintBus:
         return self.thread
         
     def Print(self, msg, verb = False):
-        if verb and self.verboose:
-            self._BUS.PrintBus.put(f"(Verboose) {self.header}{msg}")
+        if verb and self.verbose:
+            self._BUS.PrintBus.put(f"(Verbose) {self.header}{msg}")
         elif verb == False:
             self._BUS.PrintBus.put(f"{self.header}{msg}")
 

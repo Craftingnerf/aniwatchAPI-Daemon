@@ -16,6 +16,7 @@ helplist = {
     "downloadEpisode" : "Downloads specified episodes",
     "downloadSeason" : "Downloads all episodes",
     "downloadAll" : "Downloads all related information (description, poster, episodes)",
+    "shutdown" : "Sends a shutdown code to the specified server",
     "exit" : "Closes the enviornment",
     "":"",
     "Config Overrides (Not a command)" : "Allows you to override the default config of the daemon server (works on all download commands)"
@@ -35,6 +36,7 @@ argList = {
     "downloadEpisode" : "--anime (anime ID) -p (number) -e (episode number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
     "downloadSeason" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
     "downloadAll" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
+    "shutdown" : "-p (number) (OPTIONAL) --ip (server IP)",
     "exit" : "None",
     "":"",
     "Config Overrides (Not a command)" : " --path (filepath) --language (eg \"English\") --server (eg \"hd-1\") --fontsize (number) --category (sub/dub/raw)"
@@ -477,6 +479,26 @@ def downAll(args):
     else:
         sendMsgToServ(msg, port)
 
+def shutdown(args):
+    # had to rip this form the parseArgs funciton (it would have to be modified for this use case)
+    if args.__contains__("-p"):
+        port = int(args[args.index("-p")+1])
+    else:
+        port = config["Port"]
+    if args.__contains__("--ip"):
+        server = args[args.index("--ip")+1]
+    else:
+        server = config["Host"]
+
+    msg = {
+        "cmd": "shutdown"
+    }
+
+    if server != None:
+        sendMsgToServ(msg, port, server)
+    else:
+        sendMsgToServ(msg, port)
+
 commands = {
     "help" : help,
     "main" : main,
@@ -493,6 +515,7 @@ commands = {
     "downloadEpisode" : downEp,
     "downloadSeason" : downSeason,
     "downloadAll" : downAll,
+    "shutdown": shutdown
 }
 try:
     if len(sys.argv) > 1:

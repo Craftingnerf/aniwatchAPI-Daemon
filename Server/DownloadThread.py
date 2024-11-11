@@ -30,11 +30,11 @@ class DownloadManager:
         self._BUS = bus
         self.headerA = "(DOWNLOAD MGR): "
         self.headerB = "(DOWNLOADER): "
-        self.verboose = vb
+        self.verbose = vb
         self.miscDeque = deque()
         self.videoDeque = deque()
         self.loadDeques()
-        FileCreator.verboose = vb
+        FileCreator.verbose = vb
         FileCreator._BUS = bus
         
     def Print(self, msg, id = False, verb = False):
@@ -42,8 +42,8 @@ class DownloadManager:
             header = self.headerA
         else:
             header = self.headerB
-        if verb and self.verboose:
-            self._BUS.PrintBus.put(f"(Verboose) {color}{header}{msg}{colorReset}")
+        if verb and self.verbose:
+            self._BUS.PrintBus.put(f"(Verbose) {color}{header}{msg}{colorReset}")
         elif verb == False:
             self._BUS.PrintBus.put(f"{color}{header}{msg}{colorReset}")
 

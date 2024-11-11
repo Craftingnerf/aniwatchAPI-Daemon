@@ -8,7 +8,7 @@ defaultConfig = {
     "Type": "sub",
     "Language": "English",
     "Fontsize": 24,
-    "Verboose": False,
+    "Verbose": False,
     "Port" : 9909
 }
 
@@ -22,38 +22,85 @@ else:
     print("Creating config file")
     configLoader.StoreConfig(defaultConfig, "HiAnimeDaemon.conf")
     config = defaultConfig
-    if config==None:
-        exit()
 
-# print(json.dumps(config, indent=4))
+print(json.dumps(config, indent=4))
+# update config variable name from "verboose" to "verbose"
+if list(config.keys()).__contains__("Verboose"):
+    config["Verbose"] = config["Verboose"]
+    config.pop("Verboose")
+    configLoader.StoreConfig(defaultConfig, "HiAnimeDaemon.conf")
 
-verboose = config["Verboose"]
-printBus = PrintBus.PrintBus(_BUS, verboose)
-server = ServerThread.CommandServer(_BUS, verboose)
+
+
+verbose = config["Verbose"]
+printBus = PrintBus.PrintBus(_BUS, verbose)
+server = ServerThread.CommandServer(_BUS, verbose)
 commands = CommandThread.CommandProcessor(_BUS, config)
-downloads = DownloadThread.DownloadManager(_BUS, verboose)
+downloads = DownloadThread.DownloadManager(_BUS, verbose)
+
 
 try:
+    # start the threads
     printBus.startPrintBus(0)
     server.startThread(1, config["Port"])
     commands.startThread(2)
     downloads.startThreads(3,4)
-    while True: 
+
+    while _BUS.killBus.empty(): 
+        # pass b/c the program doesnt need to shutdown
         pass
-except KeyboardInterrupt:
-    # close all threads
-    _BUS.PrintBus.put("(MAIN) : Keyboard interrupt intercepted!")
+
+    # the program needs to shutdown due to a killcode being sent
+    _BUS.PrintBus.put("(MAIN) : Killcode found!")
     _BUS.PrintBus.put("(MAIN) : Shutting down the server!")
+
+    # stop all the threads
     downloads.stopThreads()
     commands.stopThread()
     server.shutdownServ()
     printBus.stopPrintThread()
+
+    # do the job of the print bus (b/c its shutting down)
     while not _BUS.PrintBus.empty():
         print(_BUS.PrintBus.get())
+    # exit the program cleanly
     exit()
+
+except KeyboardInterrupt:
+    # program needs to shutdown due to user CTRL+C'ing
+    _BUS.PrintBus.put("(MAIN) : Keyboard interrupt intercepted!")
+    _BUS.PrintBus.put("(MAIN) : Shutting down the server!")
+
+    # stop all the threads
+    downloads.stopThreads()
+    commands.stopThread()
+    server.shutdownServ()
+    printBus.stopPrintThread()
+
+    # do the job of the print bus (b/c its shutting down)
+    while not _BUS.PrintBus.empty():
+        print(_BUS.PrintBus.get())
+    # exit the program cleanly
+    exit()
+
 except Exception as e:
+    # the program has ran into an error
+    _BUS.PrintBus.put("(MAIN) : Shutting down the server!")
+    # stop all the threads
+    downloads.stopThreads()
+    commands.stopThread()
+    server.shutdownServ()
+    printBus.stopPrintThread()
+
+    # do the job of the print bus (b/c its shutting down)
+    while not _BUS.PrintBus.empty():
+        print(_BUS.PrintBus.get())
+
+    # debug information
     print(e)
     print("(MAIN): FFMPEG needs to be a path variable")
     print("(MAIN): Python libraries required :")
     print("(MAIN): \trequests")
+
+    # exit the program cleanly
     exit()

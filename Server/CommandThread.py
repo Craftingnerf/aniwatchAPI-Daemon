@@ -16,11 +16,12 @@ class CommandProcessor:
     def __init__(self, bus=ThreadCommBus.BUS, config=None):
         self.commandList = { # list of commands mapped to functions to be called later
             "downloadPoster" : self.downloadPoster,
-            "pass": self.stop, # def pass() wasnt an option
+            "pass": self.tick, # def pass() wasnt an option
             "downloadEpisode" : self.downloadEpisode,
             "downloadSeason" : self.downloadSeason,
             "downloadAnimeInfo" : self.downloadAnimeInfo,
-            "downloadAll" : self.downloadAll
+            "downloadAll" : self.downloadAll,
+            "shutdown" : self.stop
         }
         self._BUS = bus
         self.header = "(CMD PROC): "
@@ -31,10 +32,10 @@ class CommandProcessor:
         self.fontSize = config["Fontsize"]
         self.lang = config["Language"]
         self.API = APIRequester.API(config["API"])
-        self.verboose = config["Verboose"]
+        self.verbose = config["Verbose"]
     
     def Print(self, msg, verb = False):
-        if verb and self.verboose:
+        if verb and self.verbose:
             self._BUS.PrintBus.put(f"(Verboose) {color}{self.header}{msg}{colorReset}")
         elif verb == False:
             self._BUS.PrintBus.put(f"{color}{self.header}{msg}{colorReset}")
@@ -196,9 +197,20 @@ class CommandProcessor:
                 else:
                     self.Print(f"Invalid command sent! \"{command}\"")
 
-    def stop(self, data):
+    def tick(self, data):
         self.Print("Passing", True) # pass command for breaking out of the loop
         return
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Tells the server to shutdown via the kill bus #
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+    def stop(self, data):
+        self.Print("Recieved message to shutdown")
+        self._BUS.killBus.put(1)
+        self.Print("Killcode sent!", True)
+        return
+
+
 
     def downloadVideo(self, data, episode, episodes, animeName):
         # get the config overrides
