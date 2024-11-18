@@ -187,16 +187,16 @@ class CommandProcessor:
     def commandParser(self):
         while self._BUS.killBus.empty(): # want this to run until a command is found (or disabled)
             
-            self.Print("waiting for command", True)
-            data = self._BUS.servChannel.get() # waits for a command to appear in the queue
-            if data:
-                self.Print("Found command", True)
-                command = data["cmd"] # pulls the command from the request
-                if list(self.commandList.keys()).__contains__(command):
-                    self.commandList[command](data) # sends the command to the function (based on the "cmd" arg)
-                else:
-                    self.Print(f"Invalid command sent! \"{command}\"")
-
+                self.Print("waiting for command", True)
+                data = self._BUS.servChannel.get() # waits for a command to appear in the queue
+                if data:
+                    self.Print("Found command", True)
+                    command = data["cmd"] # pulls the command from the request
+                    if list(self.commandList.keys()).__contains__(command):
+                        self.commandList[command](data) # sends the command to the function (based on the "cmd" arg)
+                    else:
+                        self.Print(f"Invalid command sent! \"{command}\"")
+            
     def tick(self, data):
         self.Print("Passing", True) # pass command for breaking out of the loop
         return
