@@ -5,7 +5,8 @@
 # Make the requests
 # Send them to another Queue (Download quuee)
 import json, threading, time, math, os
-import ThreadCommBus, configLoader, APIRequester, PrintBus
+import ThreadCommBus, configLoader, APIRequester, PrintBus, JellyfinCompatability
+import pathGenerator, JellyfinCompatability
 
 
 color = "\033[33m"
@@ -33,20 +34,13 @@ class CommandProcessor:
         self.lang = config["Language"]
         self.API = APIRequester.API(config["API"])
         self.verbose = config["Verbose"]
+        self.pathMaker = compatabilityMap[config["compatability"]]()
     
     def Print(self, msg, verb = False):
         if verb and self.verbose:
             self._BUS.PrintBus.put(f"(Verboose) {color}{self.header}{msg}{colorReset}")
         elif verb == False:
             self._BUS.PrintBus.put(f"{color}{self.header}{msg}{colorReset}")
-
-    def cleanStr(self, string):
-        invalid_chars = "<>:\"/\\|?*;" #invalid chars *generally*
-        for char in invalid_chars: 
-            string = string.replace(char, "") # loop thru all invalid chars and replace them with _'s in the stirng
-        string.strip() # remove trailing " "'s
-        string = string.replace(" ", "_")
-        return string
     
     def blacklistedChars(self, string):
         invalid_chars = "\'`\",." #invalid chars *generally*
@@ -59,9 +53,6 @@ class CommandProcessor:
 
     def numFormatter(self, num, maxNum):
         return format(num, f"0{math.floor(math.log10(maxNum)+1)}d")
-
-    def epNameParser(self, epData, animeName, type, maxEps):
-        return f"{self.numFormatter(epData["number"], maxEps)}-{self.cleanStr(epData["title"].replace(" ", "_"))}-{self.cleanStr(animeName.replace(" ", "_"))}-{type.upper()}"
     
     def getServerRollback(self, episodeID, type=None, server=None):
         # figure out which server will work (Sub can roll over to RAW, Dub cannot roll over to anything)
@@ -211,11 +202,12 @@ class CommandProcessor:
         return
 
 
-
-    def downloadVideo(self, data, episode, episodes, animeName):
+    def downloadVideo(self, data, episode, episodes, animeData):
         # get the config overrides
         category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
-        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")
+
+        animeName = animeData["anime"]["info"]["name"]
+        path = self.pathMaker.generatePath(path, animeData)
 
         self.Print(f"Queueing download for {episode["title"]} (Episode {episode["number"]})")
 
@@ -227,7 +219,7 @@ class CommandProcessor:
         self.Print(f"Found streaming links", True)
 
         # parse the filename
-        fileName = self.epNameParser(episode,animeName, category, len(episodes))
+        fileName = self.pathMaker.epNameParser(episode, animeData, category, len(episodes))
         self.Print(f"Parsed the episode title ({fileName})", True)
 
         if category == "dub": 
@@ -273,11 +265,12 @@ class CommandProcessor:
         animeName = animeData["anime"]["info"]["name"]
         # pulls the poster URL from the JSON
         poster = animeData["anime"]["info"]["poster"] 
-        path = os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")
+        path = self.pathMaker.generatePath(path, animeData)
 
         self.Print(f"{animeId}'s info fetched", True)
         self.Print(f"Poster found at {poster}", True)
-        fileName = f"#-{self.cleanStr(animeName.replace(" ", "_"))}-Poster.{poster.split(".")[-1]}"
+
+        fileName = self.pathMaker.genPosterName(animeName, poster)
         self.Print("Adding download task", True)
         # create the download message
         msg = { "Type" : "Image", "Path": path, "url" : poster, "filename": fileName}
@@ -308,7 +301,7 @@ class CommandProcessor:
         animeName = animeInfo["anime"]["info"]["name"]
         self.Print(f"Queueing downloading {animeName}, Episode {episode["title"]} (Episode {episode["number"]})")
         
-        self.downloadVideo(data, episode, episodes, animeName)
+        self.downloadVideo(data, episode, episodes, animeInfo)
         
     def downloadSeason(self, data):
         # get the config overrides
@@ -332,7 +325,7 @@ class CommandProcessor:
         
         episodes = episodes["episodes"]
         for episode in episodes:
-            self.downloadVideo(data, episode, episodes, animeName)
+            self.downloadVideo(data, episode, episodes, animeInfo)
             
     def parseInfo(self, animeData, episodes):
         animeInfo = animeData["anime"]
@@ -354,6 +347,11 @@ class CommandProcessor:
         for genre in animeInfo["moreInfo"]["genres"]:
             lines.append(f"\t{genre}")
         lines.append("")
+
+        if len(animeData["seasons"]) > 0:
+            for season in animeData["seasons"]:
+                if season["isCurrent"]:
+                    lines.append(f"Current Season: {season["title"]}")
 
         # Episode data
         lines.append(f"Episode Count : {len(episodes)}")
@@ -452,7 +450,6 @@ class CommandProcessor:
         if not animeData["success"]:
             return
         animeData = animeData["data"]
-        animeInfo = animeData["anime"]
 
         # get the anime episodes (for the names)
         episodes = self.API.getAnimeEps(animeId)
@@ -464,10 +461,10 @@ class CommandProcessor:
         lines = self.parseInfo(animeData, episodes)
         
         # parse the filename
-        fileName = f"$-{self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))}-Info.txt"
+        fileName = self.pathMaker.getDescriptionName(animeData)
         
         # parse the request
-        msg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))).replace("\\","/")}
+        msg = {"Type" : "Description", "Path" : self.pathMaker.generatePath(path, animeData)}
         msg["text"] = lines
         msg["filename"] = fileName
         # send the download request to the queue
@@ -504,31 +501,44 @@ class CommandProcessor:
 
         # pulls the poster URL from the JSON
         poster = animeData["anime"]["info"]["poster"] 
-        postrFileName = f"#-{self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))}-Poster.{poster.split(".")[-1]}"
+        postrFileName = self.pathMaker.getPosterName(animeData, poster)
 
         # create the Poster download request
         self.Print(f"Parsing queue request", True)
-        postrMsg = { "Type" : "Image", "Path": os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/"), "url" : poster, "filename" : postrFileName}
+        postrMsg = { "Type" : "Image", "Path": self.pathMaker.generatePath(path, animeData), "url" : poster, "filename" : postrFileName}
         self._BUS.downChannel.put(postrMsg)
         self.Print(f"Finished queueing {animeName}'s poster")
 
         # Info parser section
         self.Print(f"Queueing {animeName}'s Info (description)")
         lines = self.parseInfo(animeData, episodes)
-        descFileName = f"$-{self.cleanStr(animeInfo["info"]["name"].replace(" ", "_"))}-Info.txt"
+        descFileName = self.pathMaker.getDescriptionName(animeData)
 
         # parse the request
-        descMsg = {"Type" : "Description", "Path" : os.path.join(path, self.cleanStr(animeName.replace(" ", "_"))).replace("\\","/")}
+        descMsg = {"Type" : "Description", "Path" : self.pathMaker.generatePath(path, animeData)}
         descMsg["text"] = lines
         descMsg["filename"] = descFileName
 
         # send the download request to the queue
         self._BUS.downChannel.put(descMsg)
 
+        # download any extra information that the compatability script requires
+        self.pathMaker.downloadExtra(path, animeData, self._BUS)
+        
         # Video download section
         self.Print(f"Queueing {animeName}'s Episodes")
         for episode in episodes:
-            self.downloadVideo(data, episode, episodes, animeName)
+            self.downloadVideo(data, episode, episodes, animeData)
+
+#
+# Have to put this down here
+# the joys of interperted languages :D
+#
+compatabilityMap = {
+    "default" : pathGenerator.defaultPathCreator,
+    "jellyfin" : JellyfinCompatability.JellyFinPathCreator
+}
+
 
 
 _BUS = ThreadCommBus.BUS()
@@ -554,3 +564,8 @@ def testing():
     while not _BUS.downChannel.empty():
         print(json.dumps(_BUS.downChannel.get(), indent=4))
    
+
+#
+# welcome to a 600 line monalith :D
+# I need to refactor this dont I ....
+#

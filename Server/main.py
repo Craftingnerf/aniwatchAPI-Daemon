@@ -4,6 +4,7 @@ import json
 defaultConfig = {
     "API": "None",
     "Path": "C:\\HiAnimeDaemon",
+    "compatability" : "default",
     "Server": "hd-1",
     "Type": "sub",
     "Language": "English",
@@ -30,6 +31,10 @@ if list(config.keys()).__contains__("Verboose"):
     config.pop("Verboose")
     configLoader.StoreConfig(defaultConfig, "HiAnimeDaemon.conf")
 
+if not list(config.keys()).__contains__("compatability"):
+    print("(MAIN) : Adding compatability to config")
+    config["compatability"] = defaultConfig["compatability"]
+    configLoader.StoreConfig(defaultConfig, "HiAnimeDaemon.conf")
 
 
 verbose = config["Verbose"]
