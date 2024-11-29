@@ -48,23 +48,6 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
         else:
             return 1
 
-    def getSeasonNumber(self, animeData):
-        mod = 0
-        if len(animeData["seasons"]) > 0:
-            for season in animeData["seasons"]:
-                if season["title"].__contains__("Part") and not season["title"].__contains__("Part 1"):
-                    mod += 1
-                if season["isCurrent"]:
-                    try:
-                        number = season["title"].split(" ")[1]
-                        number = self.getInts(number)
-                        return int(number)+mod
-                    except Exception as e:
-                        print(e)
-                        return -1
-        else:
-            return 1
-
     def getSeriesName(self, animeData):
         if len(animeData["seasons"]) > 0:
             for season in animeData["seasons"]:
@@ -98,7 +81,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     
     def generateSeasonNumber(self, animeData):
         lines = []
-        seasonNum = self.getSeasonNumber(animeData)
+        seasonNum = self.getSeasonIndex(animeData)
         lines.append(f"<seasonnumber>{seasonNum}</seasonnumber>")
         return lines
 
@@ -175,7 +158,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
 
     def generatePath(self, path, animeData):
         genPath = self.osPathJoin(path, self.getSeriesName(animeData))
-        folderName = f"Season_{self.getSeasonNumber(animeData)}"
+        folderName = f"Season_{self.getSeasonIndex(animeData)}"
         genPath = self.osPathJoin(genPath, folderName)
 
         return genPath.replace("\\","/")
