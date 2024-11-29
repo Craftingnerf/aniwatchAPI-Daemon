@@ -16,6 +16,7 @@ helplist = {
     "downloadEpisode" : "Downloads specified episodes",
     "downloadSeason" : "Downloads all episodes",
     "downloadAll" : "Downloads all related information (description, poster, episodes)",
+    "genMetadata" : "Downloads the metadata related to the server configuration (default = none)",
     "shutdown" : "Sends a shutdown code to the specified server",
     "exit" : "Closes the enviornment",
     "":"",
@@ -36,6 +37,7 @@ argList = {
     "downloadEpisode" : "--anime (anime ID) -p (number) -e (episode number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
     "downloadSeason" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
     "downloadAll" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP) --burn (burns subtitles)",
+    "genMetadata" : "--anime (anime ID) -p (number) (OPTIONAL) --ip (server IP)",
     "shutdown" : "-p (number) (OPTIONAL) --ip (server IP)",
     "exit" : "None",
     "":"",
@@ -479,6 +481,31 @@ def downAll(args):
     else:
         sendMsgToServ(msg, port)
 
+def genMetadata(args):
+    anime, server, port, epNum, path, lang, serv, font, cate, burn = parseArgs(args)
+
+    # parse the msg
+    msg = {"cmd": "genMetadata", "animeId": anime}
+
+    if path != None:
+        msg["path"] = path
+    if lang != None:
+        msg["language"] = lang
+    if serv != None:
+        msg["server"] = serv
+    if font != None:
+        msg["fontsize"] = font
+    if cate != None:
+        msg["type"] = cate
+    if burn != None:
+        msg["burn"] = burn
+
+    if server != None:
+        sendMsgToServ(msg, port, server)
+    else:
+        sendMsgToServ(msg, port)
+
+
 def shutdown(args):
     # had to rip this form the parseArgs funciton (it would have to be modified for this use case)
     if args.__contains__("-p"):
@@ -515,6 +542,7 @@ commands = {
     "downloadEpisode" : downEp,
     "downloadSeason" : downSeason,
     "downloadAll" : downAll,
+    "genMetadata" : genMetadata,
     "shutdown": shutdown
 }
 try:

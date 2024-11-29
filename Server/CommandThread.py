@@ -22,6 +22,7 @@ class CommandProcessor:
             "downloadSeason" : self.downloadSeason,
             "downloadAnimeInfo" : self.downloadAnimeInfo,
             "downloadAll" : self.downloadAll,
+            "genMetadata" : self.genMetadata,
             "shutdown" : self.stop
         }
         self._BUS = bus
@@ -530,11 +531,34 @@ class CommandProcessor:
         for episode in episodes:
             self.downloadVideo(data, episode, episodes, animeData)
 
+
+    #
+    # Generates all the metadata that the current compatability selection needs
+    # used for if the user has downloaded shows and needs the metadata (like I do...)
+    #
+    def genMetadata(self, data):
+        # get the config overrides
+        category, server, fontSize, lang, path, burn = self.getConfigOverrides(data)
+        
+        self.Print("Generating the anime metadata", True)
+        
+        # Get the anime name and info
+        animeId = data["animeId"]
+        self.Print(f"Fetching Anime info", True)
+        animeData = self.API.getAnimeInfo(animeId)
+        if not animeData["success"]:
+            return
+        animeData = animeData["data"]
+
+        # generate the metadata
+        self.pathMaker.getMetadata(path, animeData, self._BUS)
+
+
 #
 # Have to put this down here
 # the joys of interperted languages :D
 #
-compatabilityMap = {
+compatabilityMap = {#
     "default" : pathGenerator.defaultPathCreator,
     "jellyfin" : JellyfinCompatability.JellyFinPathCreator
 }

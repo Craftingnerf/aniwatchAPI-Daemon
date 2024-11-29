@@ -22,6 +22,9 @@ class defaultPathCreator:
     # built in os.path.join so I dont have to import it on every compatability script
     def osPathJoin(self, itemA, itemB):
         return os.path.join(itemA, itemB)
+    
+    def osPathExists(self, item):
+        return os.path.exists(item)
 
     # class type functions
 
@@ -48,3 +51,9 @@ class defaultPathCreator:
     # generate the description and overall info filename (see comment bracket of self.getPosterName)
     def getDescriptionName(self, animeData):
         return f"$-{self.cleanStr(animeData["anime"]["info"]["name"].replace(" ", "_"))}-Info.txt"
+    
+    def getMetadata(self, path, animeData, _BUS):
+        pass
+
+    def genEpMetadata(self, path, epData):
+        pass
