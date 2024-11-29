@@ -270,7 +270,7 @@ class CommandProcessor:
         self.Print(f"{animeId}'s info fetched", True)
         self.Print(f"Poster found at {poster}", True)
 
-        fileName = self.pathMaker.genPosterName(animeName, poster)
+        fileName = self.pathMaker.getPosterName(animeName, poster)
         self.Print("Adding download task", True)
         # create the download message
         msg = { "Type" : "Image", "Path": path, "url" : poster, "filename": fileName}
