@@ -26,6 +26,19 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     def __init__(self):
         pass
 
+    def getInts(self, string):
+        ints = "0123456789-"
+        for char in string:
+            # loop through all the chars in the string
+            # check if they arnt in the ints string (char array)
+            # and remove the chars
+            if not ints.__contains__(char):
+                string = string.replace(char, "")
+        string.strip() # remove trailing " "'s
+        string = string.replace(" ", "_")
+        return string
+
+
     def getSeasonIndex(self, animeData):
         if len(animeData["seasons"]) > 0:
             for i in range(len(animeData["seasons"])):
@@ -35,18 +48,27 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
         else:
             return 1
 
-    def getSeason(self, animeData):
+    def getSeasonNumber(self, animeData):
+        mod = 0
         if len(animeData["seasons"]) > 0:
             for season in animeData["seasons"]:
+                if season["title"].__contains__("Part") and not season["title"].__contains__("Part 1"):
+                    mod += 1
                 if season["isCurrent"]:
-                    return season
+                    try:
+                        number = season["title"].split(" ")[1]
+                        number = self.getInts(number)
+                        return int(number)+mod
+                    except Exception as e:
+                        print(e)
+                        return -1
         else:
-            return "Season_1"
+            return 1
 
     def getSeriesName(self, animeData):
         if len(animeData["seasons"]) > 0:
             for season in animeData["seasons"]:
-                return season["title"].replace(" ", "_")
+                return season["name"].replace(" ", "_")
         else:
             return animeData["anime"]["info"]["name"].replace(" ", "_")
 
@@ -76,7 +98,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     
     def generateSeasonNumber(self, animeData):
         lines = []
-        seasonNum = self.getSeasonIndex(animeData)
+        seasonNum = self.getSeasonNumber(animeData)
         lines.append(f"<seasonnumber>{seasonNum}</seasonnumber>")
         return lines
 
@@ -153,7 +175,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
 
     def generatePath(self, path, animeData):
         genPath = self.osPathJoin(path, self.getSeriesName(animeData))
-        folderName = f"Season_{self.getSeasonIndex(animeData)}"
+        folderName = f"Season_{self.getSeasonNumber(animeData)}"
         genPath = self.osPathJoin(genPath, folderName)
 
         return genPath.replace("\\","/")
