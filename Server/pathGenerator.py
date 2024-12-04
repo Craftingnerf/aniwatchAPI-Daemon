@@ -2,7 +2,7 @@ import math, os
 
 class defaultPathCreator:
     def __init__(self):
-
+        self.name = "Default/None"
         pass
 
     # utility functions

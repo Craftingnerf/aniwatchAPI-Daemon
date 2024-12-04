@@ -24,6 +24,7 @@ import json
 
 class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     def __init__(self):
+        self.name = "Jellyfin"
         pass
 
     def getInts(self, string):
@@ -51,9 +52,9 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     def getSeriesName(self, animeData):
         if len(animeData["seasons"]) > 0:
             for season in animeData["seasons"]:
-                return season["name"].replace(" ", "_")
+                return season["name"]
         else:
-            return animeData["anime"]["info"]["name"].replace(" ", "_")
+            return animeData["anime"]["info"]["name"]
 
     def getSeriesPoster(self, animeData):
         if len(animeData["seasons"]) > 0:
@@ -122,7 +123,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
     # downloads the cover poster that jellyfin wants
     #
     def downloadExtra(self, path, animeData, _BUS):
-        genPath = self.osPathJoin(path, self.getSeriesName(animeData))
+        genPath = self.osPathJoin(path, self.getSeriesName(animeData).replace(" ", "_"))
         poster = self.getSeriesPoster(animeData)
         posterName = f"poster.{poster.split(".")[-1]}"
 
@@ -133,7 +134,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
 
     def getMetadata(self, path, animeData, _BUS):
         # get the path (should be the header directory of all the seasons)
-        genPath = self.osPathJoin(path, self.getSeriesName(animeData))
+        genPath = self.osPathJoin(path, self.getSeriesName(animeData).replace(" ", "_"))
 
         # if the show already has metadata we shouldnt need to overwrite it
         showMetadataPath = self.osPathJoin(genPath, "tvshow.nfo")
@@ -157,7 +158,7 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
 
 
     def generatePath(self, path, animeData):
-        genPath = self.osPathJoin(path, self.getSeriesName(animeData))
+        genPath = self.osPathJoin(path, self.getSeriesName(animeData).replace(" ", "_"))
         folderName = f"Season_{self.getSeasonIndex(animeData)}"
         genPath = self.osPathJoin(genPath, folderName)
 

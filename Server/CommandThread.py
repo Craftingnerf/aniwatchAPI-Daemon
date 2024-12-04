@@ -523,7 +523,12 @@ class CommandProcessor:
         # send the download request to the queue
         self._BUS.downChannel.put(descMsg)
 
+        # generate the metadata
+        self.Print(f"Downloading the metadata for {animeName} using {self.pathMaker.name} compatability", True)
+        self.pathMaker.getMetadata(path, animeData, self._BUS)
+
         # download any extra information that the compatability script requires
+        self.Print(f"Downloading extra information for {animeName} using {self.pathMaker.name} compatability", True)
         self.pathMaker.downloadExtra(path, animeData, self._BUS)
         
         # Video download section
