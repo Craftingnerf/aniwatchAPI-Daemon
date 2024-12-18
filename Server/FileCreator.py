@@ -1,4 +1,4 @@
-import subprocess, os, requests, time, ThreadCommBus, json
+import subprocess, os, requests, time, ThreadCommBus, json, re
 
 _BUS = ThreadCommBus.BUS()
 header = "(File Creator): "
@@ -69,10 +69,100 @@ def createDescriptionFile(path, lines, filename):
     return
 
 
+
+### # # # # # # #  # # # # # # # ###
+### Fixes VTT conversion crashes ###
+### # # # # # # #  # # # # # # # ###
+#
+# any gap of 2+ newlines causes FFMPEG to exit when converting subtitles
+# does this when converting to srt, or embedding to video
+#
+def vttErrorCheck(subtitles):
+    # clear out all tripple lines (and replace them with double newlines)
+    while subtitles.__contains__(b"\n\n\n") or subtitles.__contains__(b"\n\r\n\r\n\r") or subtitles.__contains__(b"\r\n\r\n\r\n"):
+        subtitles = subtitles.replace(b"\n\n\n", b"\n\n")
+        subtitles = subtitles.replace(b"\n\r\n\r\n\r", b"\n\r\n\r")
+        subtitles = subtitles.replace(b"\r\n\r\n\r\n", b"\r\n\r\n")
+    
+    # split the lines
+    subtitles = subtitles.split(b"\n\n")
+    # look for lines that contain this expression
+    # [0-9] indicates any number between 0-9 (any base 10 number)
+    # all other characters are normal chars
+    # example 00:12.030 --> 00:15.030
+    sequence = b'[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9] --> [0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]'
+    # modifier for removing values
+    mod = 0
+    for i in range(len(subtitles)):
+        # set the pointer
+        pointer = i - mod
+        # set the line for nicer code
+        line = subtitles[pointer]
+
+        if not re.search(sequence, line):
+            # generic webvtt line that doesnt need to be messed with (also should be 0)
+            if line == b'WEBVTT':
+                continue
+            # merge this line with the line before it (with a newline)
+            subtitles[pointer-1] = b"\n".join([subtitles[pointer-1], line])
+            # pop the current index, as it is no longer needed
+            subtitles.pop(pointer)
+            # increment the modifier
+            mod+=1
+    
+    # reform the lines into one contigous string
+    subtitles = b"\n\n".join(subtitles)
+    
+    # # debug line by line print
+    # for line in subtitles.split(b"\n"):
+    #     print(line)
+    return subtitles
+
+
+### # # # # # # # # #  # # # # # # # # # ###
+### Gets the text from subtitles via URL ###
+### # # # # # # # # #  # # # # # # # # # ###
+def getSubtitleContent(url):
+    # get the subtitle content
+    dirtyText = requests.get(url).content
+
+    # check to see if its a .vtt file (what I expect)
+    if url.split(".")[-1] == "vtt":
+        # if it is clean it and return it
+        cleanText = vttErrorCheck(dirtyText)
+        return cleanText
+    else:
+        # I dont know what formatting it should have
+        # and I dont know how to fix it
+        return dirtyText
+
+
+### # # # # # # # # #  # # # # # # # # # ###
+### downloads subtitles (and fixes them) ###
+### # # # # # # # # #  # # # # # # # # # ###
+def downloadSubtitles(filePath, url):
+    # get the filename from the URL & get the subtitle text
+    filename = url.replace("\\", "/").split("/")[-1]
+    Print(f"fetching {url}")
+    textContent = getSubtitleContent(url)
+
+    # save the subtitle text to a file and return the filepath
+    realPath = os.path.join(filePath, filename).replace("\\", "/")
+
+    # open, write to, then close the file (writing in bytes)
+    # if no file is found, create one
+    subtitleFile = open(realPath, "wb+")
+    subtitleFile.write(textContent)
+    subtitleFile.close()
+    
+    return realPath
+
+
+# DEPRACATED
 # # # # # # # # # # # # # # # #
 # Download subittles from url #
 # # # # # # # # # # # # # # # #
-def downloadSubtitles(filePath, epName, captions):
+def downloadSubtitlesDEP(filePath, epName, captions):
     subtitles = []
     Print("Caption Downloader Started")
     for caption in captions:
@@ -120,13 +210,16 @@ def downloadVideo(video, filePath, epName):
 # # # # # # # # # #  # # # # # # # # # #
 # Get map and input data from captions #
 # # # # # # # # # #  # # # # # # # # # #
-def getSubitleData(caption, i):
+def getSubitleData(caption, i, path):
+    Print(f"Downloading {caption} to {path}")
     captionFile = caption["file"].replace("\\", "/").split("/")[-1] # get the end of the path string (/path/to/file.type)
     captionFile = captionFile.split(".")[0] # isolate the name (we dont want the type)
 
+    subtitlePath = downloadSubtitles(path, caption["file"])
+
     output = ["", "", ""]
     # get the stream url for the caption
-    output[0] = f"-i \"{caption["file"]}\"" 
+    output[0] = f"-i \"{subtitlePath}\"" 
 
     # map the subtitle to the track
     output[1] = f"-map \"{i+1}\""
@@ -134,7 +227,7 @@ def getSubitleData(caption, i):
     # get the metadata
     output[2] = f"-metadata:s:s:{i} language=\"{captionFile}\" -metadata:s:s:{i} title=\"{caption["label"]}\"" 
 
-    return output
+    return [output, subtitlePath]
 
 
 # # # # # # # #  # # # # # # # # # 
@@ -153,9 +246,12 @@ def addSubtitlesToVideo(epName, filePath, captions):
         "-map 0" # map the video
     ]
 
+    subtitles = []
     metadata = []
     for i in range(len(captions)):
-        data = getSubitleData(captions[i], i)
+        data = getSubitleData(captions[i], i, filePath)
+        subtitles.append(data[1])
+        data = data[0]
         args.append(data[0]) # add the inputs
         maps.append(data[1]) # add the maps 
         metadata.append(data[2]) # add the metadata
@@ -176,6 +272,9 @@ def addSubtitlesToVideo(epName, filePath, captions):
     
     Print("Removing old video file")
     os.remove(file)
+    Print("Removing subtitle files")
+    for file in subtitles:
+        os.remove(file)
     return videoFile
 
 
