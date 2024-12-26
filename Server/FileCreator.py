@@ -84,34 +84,37 @@ def vttErrorCheck(subtitles):
         subtitles = subtitles.replace(b"\n\r\n\r\n\r", b"\n\r\n\r")
         subtitles = subtitles.replace(b"\r\n\r\n\r\n", b"\r\n\r\n")
     
+    # turns out this shit was borking every vtt file -_-
+    # sorry :(
+
     # split the lines
-    subtitles = subtitles.split(b"\n\n")
+    # subtitles = subtitles.split(b"\n\n")
     # look for lines that contain this expression
     # [0-9] indicates any number between 0-9 (any base 10 number)
     # all other characters are normal chars
     # example 00:12.030 --> 00:15.030
-    sequence = b'[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9] --> [0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]'
-    # modifier for removing values
-    mod = 0
-    for i in range(len(subtitles)):
-        # set the pointer
-        pointer = i - mod
-        # set the line for nicer code
-        line = subtitles[pointer]
+    # sequence = b'[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9] --> [0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]'
+    # # modifier for removing values
+    # mod = 0
+    # for i in range(len(subtitles)):
+    #     # set the pointer
+    #     pointer = i - mod
+    #     # set the line for nicer code
+    #     line = subtitles[pointer]
 
-        if not re.search(sequence, line):
-            # generic webvtt line that doesnt need to be messed with (also should be 0)
-            if line == b'WEBVTT':
-                continue
-            # merge this line with the line before it (with a newline)
-            subtitles[pointer-1] = b"\n".join([subtitles[pointer-1], line])
-            # pop the current index, as it is no longer needed
-            subtitles.pop(pointer)
-            # increment the modifier
-            mod+=1
+    #     if not re.search(sequence, line):
+    #         # generic webvtt line that doesnt need to be messed with (also should be 0)
+    #         if line == b'WEBVTT':
+    #             continue
+    #         # merge this line with the line before it (with a newline)
+    #         subtitles[pointer-1] = b"\n".join([subtitles[pointer-1], line])
+    #         # pop the current index, as it is no longer needed
+    #         subtitles.pop(pointer)
+    #         # increment the modifier
+    #         mod+=1
     
     # reform the lines into one contigous string
-    subtitles = b"\n\n".join(subtitles)
+    # subtitles = b"\n\n".join(subtitles)
     
     # # debug line by line print
     # for line in subtitles.split(b"\n"):
@@ -123,6 +126,7 @@ def vttErrorCheck(subtitles):
 ### Gets the text from subtitles via URL ###
 ### # # # # # # # # #  # # # # # # # # # ###
 def getSubtitleContent(url):
+
     # get the subtitle content
     dirtyText = requests.get(url).content
 
