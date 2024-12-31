@@ -1,5 +1,5 @@
 import ServerThread, CommandThread, DownloadThread, ThreadCommBus, PrintBus, configLoader
-import json
+import json, sys, os
 
 defaultConfig = {
     "API": "None",
@@ -43,8 +43,34 @@ server = ServerThread.CommandServer(_BUS, verbose)
 commands = CommandThread.CommandProcessor(_BUS, config)
 downloads = DownloadThread.DownloadManager(_BUS, verbose)
 
+usingLogFile = False
+logFile = None
+try:
+    # check to see if there is any arguements
+    # beyond the starting arg of main.py
+    if len(sys.argv) > 1:
+        print("(MAIN) : Attempting to add a logfile, based on arguments")
+        args = sys.argv[1:]
+        import datetime
+        # we only want one output file
+        # narrow down which argument is a file
+        for obj in args:
+            if not os.path.isdir(obj):
+                print("(MAIN) : File location found!\n(MAIN) : Creating a file!")
+                date = datetime.datetime.now()
+                old_stdout = sys.stdout
+                # set the file argument to the log file
+                logFile = open(obj, "w")
+                usingLogFile = True
+                sys.stdout = logFile
+
+except Exception as e:
+    print(f"Encountered an error:\n{e}\nMay not be an issue if no args were passed to the script")
+    pass
 
 try:
+    
+
     # start the threads
     printBus.startPrintBus(0)
     server.startThread(1, config["Port"])
@@ -68,6 +94,10 @@ try:
     # do the job of the print bus (b/c its shutting down)
     while not _BUS.PrintBus.empty():
         print(_BUS.PrintBus.get())
+        
+    # close the log file
+    if usingLogFile and logFile != None:
+        logFile.close()
     # exit the program cleanly
     exit()
 
@@ -85,6 +115,10 @@ except KeyboardInterrupt:
     # do the job of the print bus (b/c its shutting down)
     while not _BUS.PrintBus.empty():
         print(_BUS.PrintBus.get())
+
+    # close the log file
+    if usingLogFile and logFile != None:
+        logFile.close()
     # exit the program cleanly
     exit()
 
@@ -107,5 +141,8 @@ except Exception as e:
     print("(MAIN): Python libraries required :")
     print("(MAIN): \trequests")
 
+    # close the log file
+    if usingLogFile and logFile != None:
+        logFile.close()
     # exit the program cleanly
     exit()

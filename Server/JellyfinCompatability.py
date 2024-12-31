@@ -173,5 +173,8 @@ class JellyFinPathCreator(pathGenerator.defaultPathCreator):
         # showname-epName-S00E00.mp4
         
         animeName = animeData["anime"]["info"]["name"]
-
-        return f"{self.cleanStr(animeName.replace(" ", "_"))}-{self.cleanStr(epData["title"].replace(" ", "_"))}-{type.upper()}-E{self.numFormatter(epData["number"], maxEps)}"
+        seriesName = self.cleanStr(animeName.replace(" ", "_"))
+        epName = self.cleanStr(epData["title"].replace(" ", "_"))
+        category = type.upper()
+        epNum = f"E{self.numFormatter(epData["number"], maxEps)}"
+        return f"{epName}-{seriesName}-{category}-{epNum}"
