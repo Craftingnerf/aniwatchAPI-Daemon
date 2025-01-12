@@ -144,14 +144,17 @@ def getSubtitleContent(url):
 ### # # # # # # # # #  # # # # # # # # # ###
 ### downloads subtitles (and fixes them) ###
 ### # # # # # # # # #  # # # # # # # # # ###
-def downloadSubtitles(filePath, url):
+def downloadSubtitles(filePath, url, indentifier):
     # get the filename from the URL & get the subtitle text
     filename = url.replace("\\", "/").split("/")[-1]
+    filetype = filename.split(".")[-1]
+    filename = ".".join(filename.split(".")[0:-1])
+    fName = f"{filename}-{indentifier}.{filetype}"
     Print(f"fetching {url}")
     textContent = getSubtitleContent(url)
 
     # save the subtitle text to a file and return the filepath
-    realPath = os.path.join(filePath, filename).replace("\\", "/")
+    realPath = os.path.join(filePath, fName).replace("\\", "/")
 
     # open, write to, then close the file (writing in bytes)
     # if no file is found, create one
@@ -219,7 +222,7 @@ def getSubitleData(caption, i, path):
     captionFile = caption["file"].replace("\\", "/").split("/")[-1] # get the end of the path string (/path/to/file.type)
     captionFile = captionFile.split(".")[0] # isolate the name (we dont want the type)
 
-    subtitlePath = downloadSubtitles(path, caption["file"])
+    subtitlePath = downloadSubtitles(path, caption["file"], i)
 
     output = ["", "", ""]
     # get the stream url for the caption
