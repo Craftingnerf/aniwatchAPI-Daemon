@@ -199,6 +199,10 @@ def downloadVideo(video, filePath, epName):
     Print("FFMPEG Video Downloader Started")
 
     args = [
+        # Hianime increased their security
+        # have to use a referer to prevent HTTP 403 responses
+        '-protocol_whitelist file,http,https,tcp,tls,crypto',
+        '-referer https://megacloud.club/',
         "-y", # overwrite existing copies
         f"-i \"{video}\"", # download from the video url
         "-c copy", # copy the input stream (dont re-encode it)
@@ -399,8 +403,10 @@ def ffmpegGenDEP(video, captions, filePath, epName, fontSize):
     os.remove(tmpFilePath)
     Print(f"Temporary subtitle file created at: '{srtFile}'", True)
     args = [
-        '-protocol_whitelist',
-        'file,http,https,tcp,tls,crypto',
+        # Hianime increased their security
+        # have to use a referer to prevent HTTP 403 responses
+        '-protocol_whitelist file,http,https,tcp,tls,crypto',
+        '-referer https://megacloud.club/',
         "-y", # -y allows automatic file overwriting, -n automatically skips if there is a file with the same name
         '-i',
         "\""+video+"\"",
@@ -440,22 +446,24 @@ def ffmpegGenNoCaptionsDEP(video, filePath, epName):
     
     Print(outFile, True)
     args = [
-        '-protocol_whitelist',
-            'file,http,https,tcp,tls,crypto',
-            "-y", # -y allows automatic file overwriting, -n automatically skips if there is a file with the same name
-            '-i',
-            video,
-            '-c:a',
-            'copy',
-            '-c:v',
-            'libx264',
-            '-crf',
-            '23',
-            '-preset',
-            'veryfast',
-            '-s',
-            '1920x1080',
-            "\""+outFile+"\""
+        # Hianime increased their security
+        # have to use a referer to prevent HTTP 403 responses
+        '-protocol_whitelist file,http,https,tcp,tls,crypto',
+        '-referer https://megacloud.club/',
+        "-y", # -y allows automatic file overwriting, -n automatically skips if there is a file with the same name
+        '-i',
+        video,
+        '-c:a',
+        'copy',
+        '-c:v',
+        'libx264',
+        '-crf',
+        '23',
+        '-preset',
+        'veryfast',
+        '-s',
+        '1920x1080',
+        "\""+outFile+"\""
     ]
     cmd = "ffmpeg " + " ".join(args)
     
